@@ -1,0 +1,12 @@
+# Ignore Python environment folders
+aivenv/
+venv/
+env/
+
+# Ignore __pycache__ and bytecode
+__pycache__/
+*.pyc
+
+# Ignore logs, models, etc.
+logs/
+*.pt

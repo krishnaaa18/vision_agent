@@ -1,29 +1,39 @@
-# app.py
-import cv2
-import av
 import streamlit as st
-from streamlit_webrtc import webrtc_streamer, VideoTransformerBase
+import cv2
+import tempfile
+import time
 from ultralytics import YOLO
 
-# Load YOLO model once
-model = YOLO("yolov8n.pt")  # Replace with your custom model path if needed
+# Load YOLO model
+model = YOLO("yolov8n.pt")
 
-st.title("🎥 Real-Time Object Detection with YOLOv8")
+st.title("Real-Time Object Detection (Webcam)")
 
-class ObjectDetectionTransformer(VideoTransformerBase):
-    def transform(self, frame):
-        img = frame.to_ndarray(format="bgr24")
+run = st.checkbox('Start Webcam')
 
-        # Run detection
-        results = model(img)
-        annotated_frame = results[0].plot()
+FRAME_WINDOW = st.image([])
 
-        return annotated_frame
+# Capture webcam if checkbox is checked
+if run:
+    cap = cv2.VideoCapture(0)
 
-# Start webcam stream
-webrtc_streamer(
-    key="object-detection",
-    video_transformer_factory=ObjectDetectionTransformer,
-    media_stream_constraints={"video": True, "audio": False},
-    async_processing=True
-)
+    st.text("Press 'Stop' to end webcam stream.")
+
+    while run:
+        ret, frame = cap.read()
+        if not ret:
+            st.write("Failed to grab frame.")
+            break
+
+        results = model(frame)[0]
+
+        # Draw detections
+        annotated_frame = results.plot()
+
+        # Convert to RGB for Streamlit
+        annotated_frame = cv2.cvtColor(annotated_frame, cv2.COLOR_BGR2RGB)
+        FRAME_WINDOW.image(annotated_frame)
+
+    cap.release()
+else:
+    st.write('Webcam is stopped.')
